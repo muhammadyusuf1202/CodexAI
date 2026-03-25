@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodexAI</title>
+<link rel="icon" href="./img/codex_logo_top.png" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #080f17;
+    --card: #0d1825;
+    --border: #1a2d42;
+    --accent: #00d4ff;
+    --accent2: #00ff88;
+    --accent3: #7c3aed;
+    --text: #e2f0ff;
+    --muted: #5a7a99;
+    --danger: #ff4444;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+    --glow2: 0 0 30px rgba(0,255,136,0.2);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    pointer-events:none; z-index:0;
+  }
+
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,212,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(124,58,237,0.06) 0%, transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+
+  @keyframes gridMove {
+    0% { transform:translateY(0); }
+    100% { transform:translateY(40px); }
+  }
+
+  /* SPLASH */
+  #splash {
+    position:fixed; inset:0; z-index:1000;
+    background:var(--bg);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:0;
+  }
+
+  .splash-logo {
+    font-family:'Syne',sans-serif;
+    font-size:clamp(48px,10vw,96px);
+    font-weight:800; letter-spacing:-2px;
+    background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 50%,var(--accent3) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    animation: logoReveal 0.8s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  .splash-logo span {
+    -webkit-text-fill-color: var(--accent);
+    animation: blink 1s infinite;
+  }
+
+  @keyframes logoReveal {
+    from { opacity:0; transform:translateY(30px) scale(0.95); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  @keyframes blink {
+    0%,50% { opacity:1; } 51%,100% { opacity:0; }
+  }
+
+  .splash-tagline {
+    font-size:13px; color:var(--muted);
+    letter-spacing:4px; text-transform:uppercase; margin-top:16px;
+    animation: fadeUp 0.8s 0.3s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(15px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .splash-cam-wrap {
+    margin-top:40px;
+    animation: fadeUp 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  .cam-frame {
+    width:300px; height:220px;
+    border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+    position:relative; background:var(--card);
+  }
+
+  .cam-frame::before {
+    content:''; position:absolute;
+    top:8px; left:8px; width:24px; height:24px;
+    border-top:2px solid var(--accent); border-left:2px solid var(--accent);
+    border-radius:4px 0 0 0; z-index:10;
+  }
+
+  .cam-frame::after {
+    content:''; position:absolute;
+    bottom:8px; right:8px; width:24px; height:24px;
+    border-bottom:2px solid var(--accent); border-right:2px solid var(--accent);
+    border-radius:0 0 4px 0; z-index:10;
+  }
+
+  #splashVideo {
+    width:100%; height:100%;
+    object-fit:cover; transform:scaleX(-1);
+  }
+
+  .scan-line {
+    position:absolute; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    animation:scan 2s linear infinite;
+    pointer-events:none; z-index:5;
+    box-shadow:0 0 12px var(--accent);
+  }
+
+  @keyframes scan {
+    0%   { top:0; opacity:0; }
+    10%  { opacity:1; }
+    90%  { opacity:1; }
+    100% { top:100%; opacity:0; }
+  }
+
+  .cam-badge {
+    position:absolute; top:10px; right:10px;
+    background:rgba(255,68,68,0.85); color:white;
+    font-size:9px; letter-spacing:2px; padding:3px 8px;
+    border-radius:4px; text-transform:uppercase;
+    display:flex; align-items:center; gap:5px; z-index:10;
+  }
+
+  .rec-dot {
+    width:6px; height:6px; background:white;
+    border-radius:50%; animation:recPulse 1s infinite;
+  }
+
+  @keyframes recPulse { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+  .cam-status {
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+    font-size:9px; color:var(--accent); letter-spacing:2px; z-index:10;
+    white-space:nowrap;
+  }
+
+  #splashCapturePrev {
+    width:300px; margin-top:14px; display:none;
+    border-radius:8px; overflow:hidden;
+    border:1px solid var(--accent2);
+    box-shadow:var(--glow2);
+    animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  #splashCapturePrev .label {
+    background:rgba(0,255,136,0.1); padding:6px 12px;
+    font-size:10px; color:var(--accent2); letter-spacing:2px; text-align:center;
+  }
+
+  #splashCapturePrev img {
+    width:100%; display:block; transform:scaleX(-1);
+  }
+
+  .splash-btn {
+    margin-top:28px; padding:13px 48px;
+    background:transparent; border:1px solid var(--accent);
+    color:var(--accent); font-family:'JetBrains Mono',monospace;
+    font-size:13px; letter-spacing:3px; text-transform:uppercase;
+    cursor:pointer; border-radius:6px; position:relative; overflow:hidden;
+    transition:all 0.3s;
+    animation: fadeUp 0.8s 0.8s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  .splash-btn::before {
+    content:''; position:absolute; inset:0;
+    background:var(--accent); transform:translateX(-101%);
+    transition:transform 0.3s; z-index:-1;
+  }
+
+  .splash-btn:hover { color:var(--bg); box-shadow:var(--glow); }
+  .splash-btn:hover::before { transform:translateX(0); }
+
+  /* APP */
+  #app {
+    height:100vh; display:none;
+    flex-direction:column; position:relative; z-index:1;
+  }
+
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 24px; border-bottom:1px solid var(--border);
+    background:rgba(8,15,23,0.96); backdrop-filter:blur(20px);
+    position:relative; z-index:10;
+  }
+
+  .header-logo {
+    font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    letter-spacing:-1px;
+  }
+
+  .header-center {
+    display:flex; align-items:center; gap:10px;
+    font-size:11px; color:var(--muted); letter-spacing:1px;
+  }
+
+  .status-dot {
+    width:7px; height:7px; background:var(--accent2);
+    border-radius:50%; animation:pulse 2s infinite;
+    box-shadow:0 0 8px var(--accent2);
+  }
+
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.3);opacity:0.7;} }
+
+  .model-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 10px; border:1px solid rgba(124,58,237,0.4);
+    border-radius:20px; font-size:10px; color:#a78bfa; letter-spacing:1px;
+    background:rgba(124,58,237,0.08);
+  }
+
+  #miniCamWrap {
+    width:36px; height:36px; border-radius:50%; overflow:hidden;
+    border:2px solid var(--accent); cursor:pointer;
+    box-shadow:var(--glow); transition:transform 0.2s;
+  }
+
+  #miniCamWrap:hover { transform:scale(1.1); }
+
+  #miniVideo {
+    width:100%; height:100%; object-fit:cover; transform:scaleX(-1);
+  }
+
+  .main {
+    display:flex; flex:1; overflow:hidden;
+  }
+
+  .sidebar {
+    width:66px; border-right:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center;
+    padding:18px 0; gap:14px; background:rgba(8,15,23,0.8);
+  }
+
+  .sb-btn {
+    width:42px; height:42px; border:1px solid var(--border);
+    background:transparent; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--muted); font-size:17px;
+    transition:all 0.2s; position:relative;
+  }
+
+  .sb-btn:hover,.sb-btn.active {
+    border-color:var(--accent); color:var(--accent);
+    background:rgba(0,212,255,0.08); box-shadow:var(--glow);
+  }
+
+  .sb-btn .tip {
+    position:absolute; left:54px;
+    background:var(--card); border:1px solid var(--border);
+    padding:4px 10px; border-radius:6px; font-size:10px;
+    color:var(--text); opacity:0; pointer-events:none;
+    transition:opacity 0.2s; z-index:100; white-space:nowrap;
+  }
+
+  .sb-btn:hover .tip { opacity:1; }
+
+  .chat-area {
+    flex:1; display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  .messages {
+    flex:1; overflow-y:auto; padding:24px;
+    display:flex; flex-direction:column; gap:20px;
+    scroll-behavior:smooth;
+  }
+
+  .messages::-webkit-scrollbar { width:4px; }
+  .messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .welcome {
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:220px; text-align:center; gap:12px;
+    animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  .welcome-icon { font-size:52px; filter:drop-shadow(0 0 20px var(--accent)); }
+
+  .welcome h2 {
+    font-family:'Syne',sans-serif; font-size:28px; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+
+  .welcome p {
+    font-size:12px; color:var(--muted); letter-spacing:1px;
+    max-width:400px; line-height:1.9;
+  }
+
+  .chips {
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px;
+  }
+
+  .chip {
+    padding:7px 16px; border:1px solid var(--border); border-radius:20px;
+    font-size:11px; color:var(--muted); cursor:pointer; transition:all 0.2s;
+    letter-spacing:0.5px; font-family:'JetBrains Mono',monospace;
+  }
+
+  .chip:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.06); }
+
+  .msg {
+    display:flex; gap:14px;
+    animation: msgIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes msgIn {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .msg.user { flex-direction:row-reverse; }
+
+  .msg-av {
+    width:34px; height:34px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; overflow:hidden;
+  }
+
+  .msg.user .msg-av {
+    background:linear-gradient(135deg,var(--accent3),var(--accent));
+    color:white; font-family:'Syne',sans-serif;
+  }
+
+  .msg.ai .msg-av {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:var(--bg); font-family:'Syne',sans-serif; font-size:11px;
+  }
+
+  .user-av-img {
+    width:100%; height:100%; object-fit:cover;
+    transform:scaleX(-1); border-radius:8px;
+  }
+
+  .msg-body { max-width:65%; display:flex; flex-direction:column; gap:6px; }
+  .msg.user .msg-body { align-items:flex-end; }
+
+  .msg-meta {
+    font-size:10px; color:var(--muted); letter-spacing:1px;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  .msg-bubble {
+    padding:14px 18px; border-radius:12px;
+    font-size:13px; line-height:1.8;
+  }
+
+  .msg.user .msg-bubble {
+    background:rgba(0,212,255,0.08);
+    border:1px solid rgba(0,212,255,0.2);
+    border-radius:12px 4px 12px 12px;
+  }
+
+  .msg.ai .msg-bubble {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:4px 12px 12px 12px;
+  }
+
+  .msg-img {
+    max-width:180px; border-radius:8px;
+    border:1px solid var(--border); margin-bottom:8px;
+    display:block; transform:scaleX(-1);
+  }
+
+  .msg-bubble pre {
+    background:rgba(0,0,0,0.45); border:1px solid var(--border);
+    border-radius:6px; padding:12px; margin:8px 0;
+    overflow-x:auto; font-size:12px; color:var(--accent2);
+  }
+
+  .msg-bubble code {
+    background:rgba(0,212,255,0.1); padding:2px 6px;
+    border-radius:3px; color:var(--accent); font-size:12px;
+  }
+
+  .typing-dots {
+    display:flex; gap:4px; padding:14px 18px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:4px 12px 12px 12px; width:fit-content;
+  }
+
+  .typing-dots span {
+    width:6px; height:6px; background:var(--accent);
+    border-radius:50%; animation:tdot 1.2s infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay:0.4s; }
+
+  @keyframes tdot {
+    0%,60%,100% { transform:translateY(0); opacity:0.4; }
+    30% { transform:translateY(-6px); opacity:1; }
+  }
+
+  .input-wrap {
+    padding:14px 22px 18px;
+    border-top:1px solid var(--border);
+    background:rgba(8,15,23,0.96);
+    backdrop-filter:blur(20px);
+  }
+
+  #attachPrev {
+    display:none; margin-bottom:10px; position:relative; width:fit-content;
+  }
+
+  #attachPrev img {
+    width:80px; height:60px; object-fit:cover;
+    border-radius:8px; border:1px solid var(--accent2);
+    transform:scaleX(-1); box-shadow:var(--glow2);
+  }
+
+  #attachPrev button {
+    position:absolute; top:-6px; right:-6px;
+    width:18px; height:18px; background:var(--danger);
+    border-radius:50%; border:none; color:white;
+    font-size:9px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .input-row { display:flex; gap:10px; align-items:flex-end; }
+
+  .input-box {
+    flex:1; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:12px 16px; color:var(--text);
+    font-family:'JetBrains Mono',monospace; font-size:13px;
+    resize:none; outline:none; min-height:46px; max-height:160px;
+    line-height:1.6; transition:border-color 0.2s, box-shadow 0.2s;
+    overflow-y:auto;
+  }
+
+  .input-box::placeholder { color:var(--muted); }
+
+  .input-box:focus {
+    border-color:rgba(0,212,255,0.4);
+    box-shadow:0 0 0 3px rgba(0,212,255,0.06);
+  }
+
+  .input-btns { display:flex; flex-direction:column; gap:6px; }
+
+  .ibtn {
+    width:44px; height:44px; border-radius:10px;
+    border:1px solid var(--border); background:transparent;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:16px; color:var(--muted); transition:all 0.2s;
+  }
+
+  .ibtn:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.08); }
+
+  .ibtn.send {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none; color:var(--bg); font-weight:700; box-shadow:var(--glow);
+  }
+
+  .ibtn.send:hover { transform:scale(1.06); box-shadow:0 0 30px rgba(0,212,255,0.5); color:var(--bg); }
+
+  .input-hint {
+    margin-top:7px; font-size:10px; color:var(--muted);
+    letter-spacing:1px; display:flex; gap:16px;
+  }
+
+  .right-panel {
+    width:210px; border-left:1px solid var(--border);
+    background:rgba(8,15,23,0.8);
+    display:flex; flex-direction:column; padding:14px; gap:12px;
+  }
+
+  .panel-lbl {
+    font-size:9px; letter-spacing:3px; color:var(--muted); text-transform:uppercase;
+  }
+
+  .cam-panel {
+    position:relative; border-radius:8px; overflow:hidden;
+    border:1px solid var(--border); background:var(--card);
+  }
+
+  .cam-panel::before {
+    content:''; position:absolute; top:6px; left:6px;
+    width:16px; height:16px;
+    border-top:2px solid var(--accent2); border-left:2px solid var(--accent2);
+    z-index:5; pointer-events:none;
+  }
+
+  .cam-panel::after {
+    content:''; position:absolute; bottom:6px; right:6px;
+    width:16px; height:16px;
+    border-bottom:2px solid var(--accent2); border-right:2px solid var(--accent2);
+    z-index:5; pointer-events:none;
+  }
+
+  #camFeed {
+    width:100%; aspect-ratio:4/3; object-fit:cover;
+    transform:scaleX(-1); display:block;
+  }
+
+  .cam-scan-r {
+    position:absolute; left:0; right:0; height:1px;
+    background:var(--accent); box-shadow:0 0 8px var(--accent);
+    animation:scan 3s linear infinite; pointer-events:none; z-index:4;
+  }
+
+  .snap-btn {
+    width:100%; padding:10px; background:transparent;
+    border:1px solid var(--accent); color:var(--accent);
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    letter-spacing:2px; text-transform:uppercase;
+    cursor:pointer; border-radius:6px; transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  .snap-btn:hover { background:rgba(0,212,255,0.1); box-shadow:var(--glow); }
+
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  .stat-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:6px; padding:10px;
+  }
+
+  .stat-val {
+    font-size:18px; font-weight:700; color:var(--accent);
+    font-family:'Syne',sans-serif;
+  }
+
+  .stat-key { font-size:9px; color:var(--muted); letter-spacing:1px; margin-top:2px; }
+
+  .flash-ov {
+    position:fixed; inset:0; background:white; opacity:0;
+    pointer-events:none; z-index:9999; transition:opacity 0.1s;
+  }
+
+  .flash-ov.on { opacity:0.55; transition:opacity 0s; }
+
+  #capCanvas { display:none; }
+
+  @media (max-width:768px) {
+    .right-panel { display:none; }
+    .sidebar { width:52px; }
+    .msg-body { max-width:82%; }
+  }
+  /* Tugma stili */
+.menu-toggle {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: #333;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Panelning boshlang'ich holati (yashirilgan) */
+.right-panel {
+  position: fixed;
+  right: -300px; /* Panel kengligi qancha bo'lsa, shuncha minus */
+  top: 0;
+  width: 300px;
+  height: 100%;
+  background: #1a1a1a;
+  transition: 0.3s; /* Ochilish tezligi */
+  z-index: 999;
+  padding: 20px;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+}
+
+/* Panel ochilgandagi holat */
+.right-panel.active {
+  right: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="flash-ov" id="flashOv"></div>
+<canvas id="capCanvas"></canvas>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">CodexAI<span>_</span></div>
+  <div class="splash-tagline">Next-Gen Intelligence Terminal</div>
+
+  <div class="splash-cam-wrap">
+    <div class="cam-frame">
+      <video id="splashVideo" autoplay muted playsinline></video>
+      <div class="scan-line"></div>
+      <div class="cam-badge"><div class="rec-dot"></div> LIVE</div>
+      <div class="cam-status" id="splashStatus">INITIALIZING...</div>
+    </div>
+  </div>
+
+  <div id="splashCapturePrev">
+    <div class="label">✓ TASVIRLANDI — TAHLIL QILINDI</div>
+    <img id="splashCaptureImg" src="" alt="cap">
+  </div>
+
+  <button class="splash-btn" onclick="enterApp()">▶ KIRISH</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="header">
+    <div class="header-logo">CodexAI</div>
+    <div class="header-center">
+      <div class="status-dot"></div>
+      <span>ONLINE</span>
+      <span style="color:var(--border)">|</span>
+      <div class="model-badge">⚡ LLAMA-3.3-70B</div>
+    </div>
+    <div id="miniCamWrap" onclick="captureAndAttach()" title="Snapshot ol">
+      <video id="miniVideo" autoplay muted playsinline></video>
+    </div>
+  </header>
+
+  <div class="main">
+    <nav class="sidebar">
+      <button class="sb-btn active"><span>💬</span><div class="tip">Chat</div></button>
+      <button class="sb-btn" onclick="clearChat()"><span>🗑</span><div class="tip">Tozalash</div></button>
+      <button class="sb-btn" onclick="captureAndAttach()"><span>📷</span><div class="tip">Snapshot</div></button>
+    </nav>
+
+    <div class="chat-area">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">⬡</div>
+          <h2>Salom, men CodexAI</h2>
+          <p>Groq'ning ultra-tez AI modeli bilan ishlayapman.<br>Savolingizni yozing yoki 📷 kameradan rasm oling!</p>
+          <div class="chips">
+            <div class="chip" onclick="sendQuick('Salom! O\'zingni tanit')">Salom!</div>
+            <div class="chip" onclick="sendQuick('Python da hello world kodi yozib ber')">Kod yoz</div>
+            <div class="chip" onclick="sendQuick('Qiziqarli bir fakt ayt')">Fakt</div>
+            <div class="chip" onclick="sendQuick('2 + 2 * 3 nechchi? Tushuntir')">Matematika</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-wrap">
+        <div id="attachPrev">
+          <img id="attachImg" src="" alt="">
+          <button onclick="removeAttach()">✕</button>
+        </div>
+        <div class="input-row">
+          <textarea class="input-box" id="userInput"
+            placeholder="Xabar yozing..."
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"
+          ></textarea>
+          <div class="input-btns">
+            <button class="ibtn" onclick="captureAndAttach()" title="📷">📷</button>
+            <button class="ibtn send" onclick="sendMessage()" title="Yuborish">➤</button>
+          </div>
+        </div>
+        <div class="input-hint">
+          <span>⌨ Enter = yuborish</span>
+          <span>⇧ Shift+Enter = yangi qator</span>
+        </div>
+      </div>
+    </div>
+
+      <aside class="right-panel">
+        <button class="menu-toggle" onclick="togglePanel()">
+  <img src="https://img.icons8.com/ios-filled/50/ffffff/menu--v1.png" width="30" />
+</button>
+        <div class="panel-lbl">Live Kamera</div>
+        <div class="cam-panel">
+          <video id="camFeed" autoplay muted playsinline></video>
+          <div class="cam-scan-r"></div>
+        </div>
+        <button class="snap-btn" onclick="captureAndAttach()">📷 SNAPSHOT</button>
+        <div class="panel-lbl" style="margin-top:4px;">Statistika</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="statMsgs">0</div>
+            <div class="stat-key">XABARLAR</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="statSnaps">0</div>
+            <div class="stat-key">SNAPSHOT</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_KEY = process.env.GROQ_KEY;
+const MODEL    = 'llama-3.3-70b-versatile';
+
+let mediaStream    = null;
+let splashCapture  = null;
+let attachedImg    = null;
+let msgCount       = 0;
+let snapCount      = 0;
+let history        = [];
+let splashDone     = false;
+
+// ── Camera ──
+async function startCamera() {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'user', width:640, height:480 }, audio:false
+    });
+    document.getElementById('splashVideo').srcObject = mediaStream;
+    document.getElementById('splashStatus').textContent = 'KAMERA TAYYOR';
+    setTimeout(doSplashCapture, 1600);
+  } catch(e) {
+    document.getElementById('splashStatus').textContent = "KAMERA YO'Q";
+  }
+}
+
+function doSplashCapture() {
+  if (splashDone) return;
+  const v = document.getElementById('splashVideo');
+  const c = document.getElementById('capCanvas');
+  if (!v || v.videoWidth === 0) { setTimeout(doSplashCapture, 400); return; }
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  splashCapture = c.toDataURL('image/jpeg', 0.8);
+  splashDone = true;
+  flash();
+  document.getElementById('splashStatus').textContent = 'TASVIRLANDI ✓';
+  const prev = document.getElementById('splashCapturePrev');
+  document.getElementById('splashCaptureImg').src = splashCapture;
+  prev.style.display = 'block';
+}
+
+function flash() {
+  const el = document.getElementById('flashOv');
+  el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 120);
+}
+
+function attachStreamToApp() {
+  if (!mediaStream) return;
+  ['miniVideo','camFeed'].forEach(id => {
+    const v = document.getElementById(id);
+    if (v) v.srcObject = mediaStream;
+  });
+}
+
+function captureAndAttach() {
+  const v = document.getElementById('camFeed') || document.getElementById('miniVideo');
+  const c = document.getElementById('capCanvas');
+  if (!v || v.videoWidth === 0) return;
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  attachedImg = c.toDataURL('image/jpeg', 0.8);
+  snapCount++;
+  document.getElementById('statSnaps').textContent = snapCount;
+  document.getElementById('attachImg').src = attachedImg;
+  document.getElementById('attachPrev').style.display = 'block';
+  flash();
+  document.getElementById('userInput').focus();
+}
+
+function removeAttach() {
+  attachedImg = null;
+  document.getElementById('attachPrev').style.display = 'none';
+}
+
+// ── Enter ──
+function enterApp() {
+  const splash = document.getElementById('splash');
+  splash.style.transition = 'opacity 0.55s, transform 0.55s';
+  splash.style.opacity = '0';
+  splash.style.transform = 'scale(0.97)';
+  setTimeout(() => {
+    splash.style.display = 'none';
+    const app = document.getElementById('app');
+    app.style.display = 'flex';
+    attachStreamToApp();
+    if (splashCapture) setTimeout(greetUser, 700);
+  }, 560);
+}
+
+async function greetUser() {
+  document.getElementById('welcome').style.display = 'none';
+  const typing = showTyping();
+  try {
+    const r = await callGroq([{
+      role:'user',
+      content:"Salom! Men yangi foydalanuvchiman. O'zbekcha qisqa va iliq kutib ol, nimalarga yordam bera olishingni ayt."
+    }]);
+    removeTyping(typing);
+    addAiMsg(r);
+  } catch(e) {
+    removeTyping(typing);
+    addAiMsg('Salom! Men CodexAI 🚀 Savolingizni yozing!');
+  }
+}
+
+// ── Send ──
+async function sendMessage() {
+  const inp = document.getElementById('userInput');
+  const text = inp.value.trim();
+  if (!text && !attachedImg) return;
+
+  document.getElementById('welcome').style.display = 'none';
+
+  const img  = attachedImg;
+  const txt  = text || '📷 Bu rasmni tahlil qil';
+
+  addUserMsg(txt, img);
+  inp.value = '';
+  inp.style.height = 'auto';
+  removeAttach();
+  msgCount++;
+  document.getElementById('statMsgs').textContent = msgCount;
+
+  const content = img
+    ? [{ type:'image_url', image_url:{ url:img } }, { type:'text', text:txt }]
+    : txt;
+
+  history.push({ role:'user', content });
+
+  const typing = showTyping();
+  try {
+    const reply = await callGroq(history);
+    removeTyping(typing);
+    history.push({ role:'assistant', content:reply });
+    addAiMsg(reply);
+  } catch(e) {
+    removeTyping(typing);
+    addAiMsg('❌ Xato: ' + e.message);
+  }
+}
+
+async function callGroq(msgs) {
+  // Groq text-only for now (vision not supported on llama-3.3)
+  const cleaned = msgs.map(m => ({
+    role: m.role,
+    content: typeof m.content === 'string'
+      ? m.content
+      : (Array.isArray(m.content)
+        ? m.content.filter(c => c.type === 'text').map(c => c.text).join(' ')
+        : String(m.content))
+  }));
+
+  const res = await fetch(GROQ_URL, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + GROQ_KEY
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1024,
+      temperature: 0.75,
+      messages: [
+        { role:'system', content:"Sen CodexAI — aqlli, tez va do'stona sun'iy intellektsan. Asosan o'zbek tilida javob ber. Qisqa, aniq, foydali bo'l. Kod so'ralsa toza va izohli kod yoz." },
+        ...cleaned
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'HTTP ' + res.status);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '...';
+}
+
+function sendQuick(t) {
+  document.getElementById('userInput').value = t;
+  sendMessage();
+}
+
+// ── DOM helpers ──
+function addUserMsg(text, img) {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  const av = splashCapture
+    ? `<img class="user-av-img" src="${splashCapture}" alt="U" style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);border-radius:8px;">`
+    : 'U';
+  d.innerHTML = `
+    <div class="msg-av">${av}</div>
+    <div class="msg-body">
+      <div class="msg-meta"><span>SIZ</span><span>${now()}</span></div>
+      ${img ? `<img class="msg-img" src="${img}" alt="snap">` : ''}
+      <div class="msg-bubble">${esc(text)}</div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBot();
+}
+
+function addAiMsg(text) {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'msg ai';
+  d.innerHTML = `
+    <div class="msg-av">AI</div>
+    <div class="msg-body">
+      <div class="msg-meta"><span>CODEXAI</span><span>${now()}</span></div>
+      <div class="msg-bubble">${fmt(text)}</div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBot();
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'msg ai'; d.id = 'typing';
+  d.innerHTML = `
+    <div class="msg-av">AI</div>
+    <div class="msg-body">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+    </div>`;
+  msgs.appendChild(d);
+  scrollBot();
+  return d;
+}
+
+function removeTyping(el) { if (el?.parentNode) el.parentNode.removeChild(el); }
+
+function fmt(t) {
+  t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\n/g, '<br>');
+  return t;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function now() {
+  return new Date().toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+function scrollBot() {
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function clearChat() {
+  history = []; msgCount = 0;
+  document.getElementById('statMsgs').textContent = 0;
+  document.getElementById('messages').innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">⬡</div>
+      <h2>Salom, men CodexAI</h2>
+      <p>Groq'ning ultra-tez AI modeli bilan ishlayapman.<br>Savolingizni yozing yoki 📷 kameradan rasm oling!</p>
+      <div class="chips">
+        <div class="chip" onclick="sendQuick('Salom! O\\'zingni tanit')">Salom!</div>
+        <div class="chip" onclick="sendQuick('Python da hello world kodi yozib ber')">Kod yoz</div>
+        <div class="chip" onclick="sendQuick('Qiziqarli bir fakt ayt')">Fakt</div>
+        <div class="chip" onclick="sendQuick('2 + 2 * 3 nechchi? Tushuntir')">Matematika</div>
+      </div>
+    </div>`;
+}
+function togglePanel() {
+  const panel = document.querySelector('.right-panel');
+  panel.classList.toggle('active');
+}
+// Start
+startCamera();
+</script>
+</body>
+</html>
